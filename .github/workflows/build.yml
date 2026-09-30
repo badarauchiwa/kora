@@ -1,1 +1,42 @@
+name: build
 
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Installer Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Creer les dossiers Android
+        run: flutter create . --org com.kora --project-name kora
+
+      - name: Autoriser Internet
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' android/app/src/main/AndroidManifest.xml
+
+      - name: Installer les paquets
+        run: flutter pub get
+
+      - name: Compiler l APK
+        run: flutter build apk --release
+
+      - name: Sauvegarder l APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kora-android
+          path: build/app/outputs/flutter-apk/app-release.apk
